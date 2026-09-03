@@ -18,10 +18,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
+var baseUrl = builder.Configuration["App:BaseUrl"] ?? "http://localhost:3000";
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowFrontend", policy =>
-		policy.WithOrigins("http://localhost:3000")
+		policy.WithOrigins(baseUrl, "http://localhost:3000")
 			.AllowAnyMethod()
 			.AllowAnyHeader());
 });
