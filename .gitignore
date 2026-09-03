@@ -1,0 +1,20 @@
+# Node
+node_modules/
+dist/
+.next/
+
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+appsettings.Development.json
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
