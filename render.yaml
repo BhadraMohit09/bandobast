@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: bandobast-api
+    env: dotnet
+    rootDir: server/Bandobast.API/Bandobast.API
+    buildCommand: dotnet build -c Release
+    startCommand: dotnet run -c Release
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # You will need to fill in these values in the Render dashboard later:
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: JwtSettings__Secret
+        sync: false
+      - key: Cloudinary__CloudName
+        sync: false
+      - key: Cloudinary__ApiKey
+        sync: false
+      - key: Cloudinary__ApiSecret
+        sync: false
