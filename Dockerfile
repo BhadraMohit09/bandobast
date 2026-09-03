@@ -16,6 +16,8 @@ COPY --from=build /app/publish .
 
 # Render dynamically assigns a port, but .NET 8 uses 8080 by default
 ENV ASPNETCORE_HTTP_PORTS=8080
+# Use Workstation GC to prevent memory access violations (Exit Status 139) on tiny Render instances
+ENV DOTNET_gcServer=0
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "Bandobast.API.dll"]

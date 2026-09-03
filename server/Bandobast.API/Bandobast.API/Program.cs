@@ -111,14 +111,23 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
 	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	if (!db.Localities.Any())
+	try 
 	{
-		db.Localities.AddRange(
-			new Locality { Name = "Jamnagar - Bedi Bandar", PinCode = "361001", Latitude = 22.4707, Longitude = 70.0577 },
-			new Locality { Name = "Jamnagar - Patel Colony", PinCode = "361008", Latitude = 22.4600, Longitude = 70.0700 },
-			new Locality { Name = "Ahmedabad - Navrangpura", PinCode = "380009", Latitude = 23.0359, Longitude = 72.5619 }
-		);
-		db.SaveChanges();
+		db.Database.Migrate();
+
+		if (!db.Localities.Any())
+		{
+			db.Localities.AddRange(
+				new Locality { Name = "Jamnagar - Bedi Bandar", PinCode = "361001", Latitude = 22.4707, Longitude = 70.0577 },
+				new Locality { Name = "Jamnagar - Patel Colony", PinCode = "361008", Latitude = 22.4600, Longitude = 70.0700 },
+				new Locality { Name = "Ahmedabad - Navrangpura", PinCode = "380009", Latitude = 23.0359, Longitude = 72.5619 }
+			);
+			db.SaveChanges();
+		}
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine("An error occurred during database migration: " + ex.Message);
 	}
 }
 
