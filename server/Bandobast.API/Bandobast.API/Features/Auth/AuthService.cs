@@ -49,7 +49,8 @@ public class AuthService
             Email = normalizedEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             DisplayName = dto.DisplayName.Trim(),
-            IsEmailVerified = false,
+            // Render Free Tier blocks outbound SMTP, so we default to true for testing
+            IsEmailVerified = true,
             EmailVerificationOtp = otp,
             EmailVerificationOtpExpiry = DateTime.UtcNow.AddMinutes(5)
         };
