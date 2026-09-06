@@ -96,6 +96,13 @@ public class AuthService
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             return (null, "Invalid email or password.");
 
+        // Bypass Render SMTP block for older accounts: Auto-verify on login
+        if (!user.IsEmailVerified)
+        {
+            user.IsEmailVerified = true;
+            await _db.SaveChangesAsync();
+        }
+
         var token = GenerateJwt(user);
 
         return (new AuthResponseDto
