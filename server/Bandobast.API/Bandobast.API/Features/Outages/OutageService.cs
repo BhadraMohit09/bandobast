@@ -1,6 +1,8 @@
 using Bandobast.API.Data;
 using Bandobast.API.Features.Outages.Dtos;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace Bandobast.API.Features.Outages;
 
@@ -13,13 +15,48 @@ public class OutageService
 		_db = db;
 	}
 
+    // Haversine formula to calculate distance in Kilometers
+    private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        var R = 6371d; // Earth radius in km
+        var dLat = (lat2 - lat1) * Math.PI / 180d;
+        var dLon = (lon2 - lon1) * Math.PI / 180d;
+        var a = Math.Sin(dLat / 2d) * Math.Sin(dLat / 2d) +
+                Math.Cos(lat1 * Math.PI / 180d) * Math.Cos(lat2 * Math.PI / 180d) *
+                Math.Sin(dLon / 2d) * Math.Sin(dLon / 2d);
+        var c = 2d * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1d - a));
+        return R * c;
+    }
+
 	public async Task<(OutageResponseDto? Result, string? Error)> CreateAsync(CreateOutageDto dto, int userId)
 	{
 		var locality = await _db.Localities.FindAsync(dto.LocalityId);
 		if (locality == null)
 			return (null, $"Locality with id {dto.LocalityId} does not exist.");
 
-		var cooldownWindow = DateTime.UtcNow.AddMinutes(-30);
+        // Geofencing Check (7km range limit)
+        if (dto.Latitude.HasValue && dto.Longitude.HasValue)
+        {
+            var distance = CalculateDistance(dto.Latitude.Value, dto.Longitude.Value, locality.Latitude, locality.Longitude);
+            if (distance > 7.0)
+            {
+                return (null, $"You are too far away ({Math.Round(distance, 1)}km) to report an outage in {locality.Name}. Must be within 7km.");
+            }
+        }
+        else
+        {
+            return (null, "GPS Location is required to verify the authenticity of this outage report.");
+        }
+
+        // Check if user is Shadowbanned
+        var user = await _db.Users.FindAsync(userId);
+        if (user?.BannedUntil != null && user.BannedUntil > DateTime.UtcNow)
+        {
+            return (null, $"Your account is temporarily restricted from reporting outages until {user.BannedUntil.Value:MMM dd, yyyy}.");
+        }
+
+        // Extended 4-Hour Cooldown
+		var cooldownWindow = DateTime.UtcNow.AddHours(-4);
 		var recentDuplicate = await _db.OutageReports.AnyAsync(o =>
 			o.LocalityId == dto.LocalityId &&
 			o.Type == dto.Type &&
@@ -68,8 +105,19 @@ public class OutageService
 		var activeWindow = DateTime.UtcNow.AddHours(-3);
 
 		var recentReports = await _db.OutageReports
+            .Include(o => o.User)
 			.Where(o => o.LocalityId == localityId && o.ReportedAt >= activeWindow && o.ResolvedAt == null)
 			.ToListAsync();
+
+        // Calculate Consensus Scores (Needs >= 3 to be active)
+        // Verified users and high CivicPoints hold 2x weight
+        int powerScore = recentReports.Where(o => o.Type == OutageType.Power)
+            .GroupBy(o => o.UserId)
+            .Sum(g => (g.First().User!.IsVerified || g.First().User!.CivicPoints > 500) ? 2 : 1);
+            
+        int waterScore = recentReports.Where(o => o.Type == OutageType.Water)
+            .GroupBy(o => o.UserId)
+            .Sum(g => (g.First().User!.IsVerified || g.First().User!.CivicPoints > 500) ? 2 : 1);
 
 		var lastPower = await _db.OutageReports
 			.Where(o => o.LocalityId == localityId && o.Type == OutageType.Power)
@@ -85,8 +133,8 @@ public class OutageService
 
 		return new LocalityStatusDto
 		{
-			HasActivePowerOutage = recentReports.Any(o => o.Type == OutageType.Power),
-			HasActiveWaterOutage = recentReports.Any(o => o.Type == OutageType.Water),
+			HasActivePowerOutage = powerScore >= 3,
+			HasActiveWaterOutage = waterScore >= 3,
 			LastPowerReport = lastPower,
 			LastWaterReport = lastWater
 		};

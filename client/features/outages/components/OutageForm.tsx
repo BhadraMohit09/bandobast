@@ -45,22 +45,44 @@ export default function OutageForm({ defaultAreaId, onReported, onAreaSelected }
         }
 
         setSubmitting(true);
-        try {
-            await createOutage({
-                localityId: Number(localityId),
-                type: type,
-            });
-            setSuccess(true);
-            onReported?.(Number(localityId));
-        } catch (err: any) {
-            if (err.response?.status === 409 && err.response.data?.message) {
-                setError(err.response.data.message);
-            } else {
-                setError("Failed to report outage. Please try again.");
-            }
-        } finally {
+
+        if (!navigator.geolocation) {
+            setError("Geolocation is not supported by your browser.");
             setSubmitting(false);
+            return;
         }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    await createOutage({
+                        localityId: Number(localityId),
+                        type: type,
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    });
+                    setSuccess(true);
+                    onReported?.(Number(localityId));
+                } catch (err: any) {
+                    if (err.response?.status === 409 && err.response.data?.message) {
+                        setError(err.response.data.message);
+                    } else if (err.response?.data?.message) {
+                        setError(err.response.data.message);
+                    } else if (err.response?.data?.Error) {
+                        setError(err.response.data.Error);
+                    } else {
+                        setError("Failed to report outage. Please try again.");
+                    }
+                } finally {
+                    setSubmitting(false);
+                }
+            },
+            (geoErr) => {
+                setError("Please allow location access to verify this outage report.");
+                setSubmitting(false);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
     }
 
     const selectedArea = areas.find(a => String(a.id) === localityId);

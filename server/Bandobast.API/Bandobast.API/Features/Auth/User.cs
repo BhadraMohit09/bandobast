@@ -27,5 +27,8 @@ public class User
     public bool IsVerified { get; set; } = false;
     public ICollection<UserBadge> Badges { get; set; } = new List<UserBadge>();
 
+    // Anti-Spam / Shadowbans
+    public DateTime? BannedUntil { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

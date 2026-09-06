@@ -46,4 +46,12 @@ public class AdminController : ControllerBase
         if (!success) return NotFound();
         return Ok(new { message = "Note added successfully." });
     }
+
+    [HttpPost("outages/{id}/flag-fake")]
+    public async Task<IActionResult> MarkOutageFake(int id)
+    {
+        var success = await _adminService.MarkOutageFakeAsync(id);
+        if (!success) return NotFound();
+        return Ok(new { message = "Outage marked as fake. Reporter penalized." });
+    }
 }

@@ -81,6 +81,31 @@ public class AdminService
         return true;
     }
 
+    public async Task<bool> MarkOutageFakeAsync(int reportId)
+    {
+        var report = await _db.OutageReports.Include(o => o.User).FirstOrDefaultAsync(o => o.Id == reportId);
+        if (report == null) return false;
+
+        var user = report.User;
+        if (user != null)
+        {
+            // Penalize the troll
+            user.CivicPoints -= 50;
+            
+            // If they drop below 0, ban them for 7 days
+            if (user.CivicPoints < 0)
+            {
+                user.BannedUntil = DateTime.UtcNow.AddDays(7);
+            }
+        }
+
+        // Delete or resolve the fake report
+        report.ResolvedAt = DateTime.UtcNow; // Mark resolved so it stops counting towards consensus
+        
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     private static AdminComplaintResponseDto MapToAdminDto(Complaint c)
     {
         return new AdminComplaintResponseDto

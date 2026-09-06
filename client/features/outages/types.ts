@@ -15,6 +15,8 @@ export interface Outage {
 export interface CreateOutagePayload {
   localityId: number;
   type: OutageType;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface LocalityStatus {
