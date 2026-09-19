@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getPublicComplaints, vouchForComplaint, ComplaintResponseDto } from "@/features/complaints/api/complaintApi";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import { Loader2, Flame, MapPin, CheckCircle2 } from "lucide-react";
+import { Loader2, Flame, MapPin, CheckCircle2, AlertCircle } from "lucide-react";
 import { FadeIn } from "@/components/ui/fade-in";
 
 export default function FeedPage() {
@@ -11,6 +11,9 @@ export default function FeedPage() {
     const [complaints, setComplaints] = useState<ComplaintResponseDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [vouchingId, setVouchingId] = useState<number | null>(null);
+    
+    // Custom Modal State
+    const [vouchAlert, setVouchAlert] = useState<{ title: string; message: string } | null>(null);
 
     useEffect(() => {
         fetchFeed();
@@ -31,13 +34,19 @@ export default function FeedPage() {
     const handleVouch = async (id: number, e: React.MouseEvent) => {
         e.preventDefault(); // In case it's in a link wrapper in future
         if (!user) {
-            alert("Please sign in to vouch for complaints.");
+            setVouchAlert({
+                title: "Sign In Required",
+                message: "You need to be signed in to vouch for community reports."
+            });
             return;
         }
 
         const complaint = complaints.find(c => c.id === id);
         if (complaint && complaint.submitterName === user.displayName) {
-            alert("You cannot vouch for your own complaint.");
+            setVouchAlert({
+                title: "Wait a second!",
+                message: "You cannot vouch for your own complaint. The authenticity system relies on other community members verifying it."
+            });
             return;
         }
 
@@ -49,14 +58,45 @@ export default function FeedPage() {
                 c.id === id ? { ...c, vouchCount: c.vouchCount + 1 } : c
             ));
         } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to vouch.");
+            setVouchAlert({
+                title: "Action Failed",
+                message: err.response?.data?.message || "Failed to vouch for this report."
+            });
         } finally {
             setVouchingId(null);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F4EF] p-4 md:p-8 pt-24">
+        <div className="min-h-screen bg-[#F5F4EF] p-4 md:p-8 pt-24 relative">
+            
+            {/* Custom Alert Modal */}
+            {vouchAlert && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#10201B]/40 backdrop-blur-sm animate-in fade-in duration-200" 
+                    onClick={() => setVouchAlert(null)}
+                >
+                    <div 
+                        className="bg-[#F5F4EF] rounded-[10px] p-8 max-w-sm w-full shadow-2xl border border-[#D8D8D1] text-center animate-in zoom-in-95 duration-200" 
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="w-12 h-12 bg-[#B34435]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-6 h-6 text-[#B34435]" />
+                        </div>
+                        <h3 className="font-serif text-2xl text-[#10201B] mb-2">{vouchAlert.title}</h3>
+                        <p className="font-sans text-sm text-[#5E6B68] mb-8 leading-relaxed">
+                            {vouchAlert.message}
+                        </p>
+                        <button 
+                            onClick={() => setVouchAlert(null)}
+                            className="w-full bg-[#10201B] hover:bg-[#10201B]/90 text-[#F5F4EF] font-medium font-sans py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#10201B] focus:ring-offset-2 focus:ring-offset-[#F5F4EF]"
+                        >
+                            Understood
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="max-w-3xl mx-auto space-y-8">
                 
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-12 border-b border-[#D8D8D1] pb-6">
@@ -117,7 +157,7 @@ export default function FeedPage() {
                                         <button 
                                             onClick={(e) => handleVouch(c.id, e)}
                                             disabled={vouchingId === c.id}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F5F4EF] hover:bg-[#B34435]/10 text-[#5E6B68] hover:text-[#B34435] transition-colors border border-[#D8D8D1] hover:border-[#B34435]/30 text-sm font-medium"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F5F4EF] hover:bg-[#B34435]/10 text-[#5E6B68] hover:text-[#B34435] transition-colors border border-[#D8D8D1] hover:border-[#B34435]/30 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B34435]/50"
                                         >
                                             {vouchingId === c.id ? (
                                                 <Loader2 className="w-4 h-4 animate-spin" />
