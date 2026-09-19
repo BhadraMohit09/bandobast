@@ -6,7 +6,7 @@ import { getAreas } from "@/features/areas/api";
 import { Area } from "@/features/areas/types";
 import { createOutage } from "@/features/outages/api";
 import { OutageType } from "@/features/outages/types";
-import { AlertCircle, CheckCircle2, Zap, Droplets, ChevronDown } from "lucide-react";
+import { AlertCircle, CheckCircle2, Zap, Droplets, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AddAreaFlow } from "@/features/areas/components/AddAreaFlow";
 
@@ -19,6 +19,12 @@ export default function OutageForm({ defaultAreaId, onReported, onAreaSelected }
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [isAreaDropdownOpen, setIsAreaDropdownOpen] = useState(false);
+    const [areaSearch, setAreaSearch] = useState("");
+
+    const filteredAreas = areas.filter(area => 
+        area.name.toLowerCase().includes(areaSearch.toLowerCase()) || 
+        area.pinCode.includes(areaSearch)
+    );
 
     useEffect(() => {
         getAreas().then(res => setAreas(res.items)).catch(() => setError("Failed to load areas."));
@@ -132,21 +138,43 @@ export default function OutageForm({ defaultAreaId, onReported, onAreaSelected }
                         </button>
                         
                         {isAreaDropdownOpen && (
-                            <div className="absolute top-full left-0 w-full mt-2 bg-[#F5F4EF] border border-[#D8D8D1] shadow-xl z-50 max-h-[300px] overflow-y-auto">
-                                {areas.map((area) => (
-                                    <button
-                                        key={area.id}
-                                        type="button"
-                                        onClick={() => {
-                                            setLocalityId(String(area.id));
-                                            setIsAreaDropdownOpen(false);
-                                        }}
-                                        className="w-full text-left px-6 py-4 border-b border-[#D8D8D1] last:border-0 hover:bg-white transition-colors flex flex-col"
-                                    >
-                                        <span className="font-serif text-lg text-[#10201B]">{area.name}</span>
-                                        <span className="font-mono text-[10px] uppercase tracking-widest text-[#5E6B68] mt-1">PIN {area.pinCode}</span>
-                                    </button>
-                                ))}
+                            <div className="absolute top-full left-0 w-full mt-2 bg-[#F5F4EF] border border-[#D8D8D1] shadow-xl z-50 flex flex-col max-h-[350px]">
+                                <div className="p-3 border-b border-[#D8D8D1] sticky top-0 bg-[#F5F4EF] z-10">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A817D]" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search by name or PIN..."
+                                            value={areaSearch}
+                                            onChange={(e) => setAreaSearch(e.target.value)}
+                                            className="w-full pl-9 pr-4 py-2 bg-white border border-[#D8D8D1] rounded-[5px] text-sm font-sans focus:outline-none focus:border-[#10201B] transition-colors"
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+                                <div className="overflow-y-auto">
+                                    {filteredAreas.length === 0 ? (
+                                        <div className="px-6 py-8 text-center text-[#7A817D] font-sans text-sm">
+                                            No areas match your search.
+                                        </div>
+                                    ) : (
+                                        filteredAreas.map((area) => (
+                                            <button
+                                                key={area.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setLocalityId(String(area.id));
+                                                    setIsAreaDropdownOpen(false);
+                                                    setAreaSearch(""); // Reset search on select
+                                                }}
+                                                className="w-full text-left px-6 py-4 border-b border-[#D8D8D1] last:border-0 hover:bg-white transition-colors flex flex-col"
+                                            >
+                                                <span className="font-serif text-lg text-[#10201B]">{area.name}</span>
+                                                <span className="font-mono text-[10px] uppercase tracking-widest text-[#5E6B68] mt-1">PIN {area.pinCode}</span>
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
