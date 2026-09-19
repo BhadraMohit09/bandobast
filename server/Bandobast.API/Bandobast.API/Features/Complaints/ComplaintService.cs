@@ -129,7 +129,7 @@ public class ComplaintService
         return (true, null);
     }
 
-    public async Task<PaginatedResult<ComplaintResponseDto>> GetPublicComplaintsAsync(int? localityId, int page = 1, int pageSize = 10)
+    public async Task<PaginatedResult<ComplaintResponseDto>> GetPublicComplaintsAsync(int? localityId, string? category = null, int page = 1, int pageSize = 10)
     {
         var query = _db.Complaints
             .Include(c => c.Locality)
@@ -139,6 +139,12 @@ public class ComplaintService
         if (localityId.HasValue)
         {
             query = query.Where(c => c.LocalityId == localityId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            var cat = category.ToUpper();
+            query = query.Where(c => c.Category.ToUpper() == cat);
         }
 
         var totalCount = await query.CountAsync();

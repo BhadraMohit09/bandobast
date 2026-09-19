@@ -22,7 +22,8 @@ export default function FeedPage() {
     const fetchFeed = async () => {
         setLoading(true);
         try {
-            const res = await getPublicComplaints(undefined, 1, 20);
+            // The user requested that only Power & Water Outages (Infrastructure) show on the Live Feed
+            const res = await getPublicComplaints(undefined, "INFRASTRUCTURE", 1, 20);
             setComplaints(res.items);
         } catch (err) {
             console.error(err);

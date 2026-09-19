@@ -43,9 +43,10 @@ export const createComplaint = async (data: CreateComplaintDto): Promise<Complai
     return res.data;
 };
 
-export const getPublicComplaints = async (localityId?: number, page: number = 1, pageSize: number = 10): Promise<PaginatedComplaints> => {
+export const getPublicComplaints = async (localityId?: number, category?: string, page: number = 1, pageSize: number = 10): Promise<PaginatedComplaints> => {
     const params = new URLSearchParams({ page: page.toString(), pageSize: pageSize.toString() });
     if (localityId) params.append("localityId", localityId.toString());
+    if (category) params.append("category", category);
     const res = await apiClient.get<PaginatedComplaints>(`/complaints?${params.toString()}`);
     return res.data;
 };

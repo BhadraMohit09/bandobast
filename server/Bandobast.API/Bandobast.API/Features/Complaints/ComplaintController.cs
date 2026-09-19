@@ -143,9 +143,9 @@ public class ComplaintsController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetPublicComplaints([FromQuery] int? localityId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetPublicComplaints([FromQuery] int? localityId, [FromQuery] string? category, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var result = await _complaintService.GetPublicComplaintsAsync(localityId, page, pageSize);
+        var result = await _complaintService.GetPublicComplaintsAsync(localityId, category, page, pageSize);
         return Ok(result);
     }
 }
