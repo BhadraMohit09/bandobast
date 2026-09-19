@@ -139,15 +139,15 @@ export default function OutageForm({ defaultAreaId, onReported, onAreaSelected }
                         
                         {isAreaDropdownOpen && (
                             <div className="absolute top-full left-0 w-full mt-2 bg-[#F5F4EF] border border-[#D8D8D1] shadow-xl z-50 flex flex-col max-h-[350px]">
-                                <div className="p-3 border-b border-[#D8D8D1] sticky top-0 bg-[#F5F4EF] z-10">
+                                <div className="p-4 border-b border-[#D8D8D1] sticky top-0 bg-[#F5F4EF] z-10">
                                     <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A817D]" />
+                                        <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-[#10201B] opacity-50" />
                                         <input
                                             type="text"
-                                            placeholder="Search by name or PIN..."
+                                            placeholder="Search by area name or PIN..."
                                             value={areaSearch}
                                             onChange={(e) => setAreaSearch(e.target.value)}
-                                            className="w-full pl-9 pr-4 py-2 bg-white border border-[#D8D8D1] rounded-[5px] text-sm font-sans focus:outline-none focus:border-[#10201B] transition-colors"
+                                            className="w-full pl-7 pr-4 py-2 bg-transparent border-b border-[#D8D8D1] text-[#10201B] font-serif text-lg placeholder:text-[#7A817D] placeholder:font-sans placeholder:text-sm focus:outline-none focus:border-[#10201B] transition-colors"
                                             autoFocus
                                         />
                                     </div>
